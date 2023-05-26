@@ -1,0 +1,23 @@
+!leave - Abandons the game and doesn't do the automatically rejoining thing. No Arguments.
+!speak - Turns on microphone for mic spamming. No Arguments.
+!shutup - Turns off microphone.  No Arguments.
+!console - Sends the console command provided into the console of the bots. Arguments: the name of the console command
+!connect - Connects all the bots to a server via IP. Example: "!connect 172.0.0.1:1234"
+
+!OwnerOnly - Toggle if only the owner of the party should be able to command the bots. Note: When this is set to false, other people in your party can set it back to true. Arguments: 1/0 or true/false
+!IgnoreFriends - Toggle if the bots should ignore people it has friended on steam/people that are in the party. Arguments: 1/1 or true/false
+
+!kill - Suicide.  No Arguments.
+!explode - Suicide by explosion.  No Arguments.
+!slot - Changes the current weapon. Arguments: 1-X, between 1 and how ever many slots there are on that class.
+!class - Changes the current class. Arguments: Name of the class.
+
+!say , !say_team , !say_party - Says text to the according channel.
+
+!fbot - Switch the follow bot type. Arguments: stop/friends/everyone
+!lout - Change the current loadout. Arguments: a/b/c/d or 1/2/3/4
+
+!taunt - Bot will execute a taunt.  No Arguments.
+!tauntn - Bot will execute a taunt by name. Example: !tauntn Taunt: The Schadenfreude 
+
+!attack - Starts or stops attacking with specified button.
