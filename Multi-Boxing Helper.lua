@@ -21,28 +21,28 @@ local medigunTypedefs = {
     quickfix = { 411 },
     kritz = { 35 }
 };
-
+ 
 -- Command container
 local commands = {};
-
+ 
 -- Found mediguns in inventory.
 local foundMediguns = {
     default = -1,
     quickfix = -1,
     kritz = -1
 };
-
+ 
 -- Helper method that converts SteamID64 to SteamID3
 local function SteamID64ToSteamID3(steamId64)
     return "[U:1:" .. steamId64 - steamid64Ident .. "]";
 end
-
+ 
 -- Thanks, LUA!
 local function SplitString(input, separator)
     if separator == nil then
         separator = "%s";
     end
-
+ 
     local t = {};
     
     for str in string.gmatch(input, "([^" .. separator .. "]+)") do
@@ -51,12 +51,12 @@ local function SplitString(input, separator)
     
     return t;
 end
-
+ 
 -- Helper that sends a message to party chat
 local function Respond(input)
     client.Command("say_party " .. input, true);
 end
-
+ 
 -- Helper that checks if table contains a value
 function Contains(table, element)
     for _, value in pairs(table) do
@@ -64,10 +64,10 @@ function Contains(table, element)
             return true;
         end
     end
-
+ 
     return false;
 end
-
+ 
 -- Game event processor
 local function FireGameEvent(event)
     -- Validation.
@@ -75,44 +75,44 @@ local function FireGameEvent(event)
     if event:GetName() ~= partyChatEventName then
         return;
     end
-
+ 
     -- Checking a message type. Should be k_eTFPartyChatType_MemberChat.
     if event:GetInt("type") ~= k_eTFPartyChatType_MemberChat then
         return;
     end
-
+ 
     local partyMessageText = event:GetString("text");
-
+ 
     -- Checking if message starts with a trigger symbol.
     if string.sub(partyMessageText, 1, 1) ~= triggerSymbol then
         return;
     end
-
+ 
     if lobbyOwnerOnly then
         -- Validating that message sender actually owns this lobby
         local senderId = SteamID64ToSteamID3(event:GetString("steamid"));
-
+ 
         if party.GetLeader() ~= senderId then
             return;
         end
     end
-
+ 
     -- Parsing the command
     local fullCommand = string.sub(partyMessageText, 2, #partyMessageText);
     local commandArgs = SplitString(fullCommand);
-
+ 
     -- Validating if we know this command
     local commandName = commandArgs[1];
     local commandCallback = commands[commandName];
-
+ 
     if commandCallback == nil then
         Respond("Unknown command [" .. commandName .. "]");
         return;
     end
-
+ 
     -- Removing command name
     table.remove(commandArgs, 1);
-
+ 
     -- Calling callback
     commandCallback(commandArgs);
 end
@@ -298,6 +298,20 @@ local function Connect(args)
     client.Command("connect " .. Connect, true);
 end
 
+local function cspam(args)
+    local cspam = args[1]
+
+    if string.lower(cspam) == "none" then
+        Respond("Stopping chatspam.")
+    elseif string.lower(cspam) == "branded" then
+        Respond("Chatspamming default lmaobox spam")
+    elseif string.lower(cspam) == "custom" then  
+        Respond("Chatspamming spam.txt")
+    end
+
+    gui.SetValue("Chat spammer", cspam)
+end
+
 local function SwitchClass(args)
     local class = args[1];
 
@@ -425,9 +439,9 @@ callbacks.Register("Draw", "MicSpam", function ()
     --we run this in a loop so it works even when you switch servers.
     --dont have to re type the command
     if PlusVoiceRecord == true then
-        client.Command("+voicerecord", true); 
-    elseif PlusVoiceRecord == false then
-        client.Command("-voicerecord", true); 
+        client.Command("+voicerecord", true);  -- although it fixes the main issue, it will spam the chat of the bot if the bot doesn't have premium. 
+    elseif PlusVoiceRecord == false then -- A better way but a way that I cant be bothered with right now is to make a check for if the owner has enabled the mic spam, then when the when the bot joins the server
+        client.Command("-voicerecord", true); -- it will only run "+voicerecord" once instead of every frame.
     end
 end)
 
@@ -529,19 +543,21 @@ local function Initialize()
 
     -- [[ Stuff added by Dr_Coomer - Doctor_Coomer#4425 ]] --
     -- Toggle Follow Bot
-    RegisterCommand("fbot", FollowBotSwitcher)
+    RegisterCommand("fbot", FollowBotSwitcher);
 
     -- Switch Loadout
-    RegisterCommand("lout", LoadoutChanger)
+    RegisterCommand("lout", LoadoutChanger);
 
     -- Toggle Owner Only Mode
-    RegisterCommand("OwnerOnly", TogglelobbyOwnerOnly)
+    RegisterCommand("OwnerOnly", TogglelobbyOwnerOnly);
 
     -- Connect to server via IP
-    RegisterCommand("connect", Connect)
+    RegisterCommand("connect", Connect);
 
     -- Toggle Ignore Friends
     RegisterCommand("IgnoreFriends", ToggleIgnoreFriends);
+
+    RegisterCommand("cspam", cspam);
 end
 
 Initialize();
