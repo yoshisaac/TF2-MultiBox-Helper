@@ -5,6 +5,7 @@
 !connect - Connects all the bots to a server via IP. Example: "!connect 172.0.0.1:1234"
 
 !OwnerOnly - Toggle if only the owner of the party should be able to command the bots. Note: When this is set to false, other people in your party can set it back to true. Arguments: 1/0 or true/false
+
 !IgnoreFriends - Toggle if the bots should ignore people it has friended on steam/people that are in the party. Arguments: 1/1 or true/false
 
 !kill - Suicide.  No Arguments.
@@ -15,6 +16,7 @@
 !say , !say_team , !say_party - Says text to the according channel.
 
 !fbot - Switch the follow bot type. Arguments: stop/friends/everyone
+!cspam - Change the chatspam type. Arguments: none/branded/custom
 !lout - Change the current loadout. Arguments: a/b/c/d or 1/2/3/4
 
 !taunt - Bot will execute a taunt.  No Arguments.
