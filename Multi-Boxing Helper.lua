@@ -15,6 +15,7 @@ local k_eTFPartyChatType_MemberChat = 1;
 local steamid64Ident = 76561197960265728;
 local partyChatEventName = "party_chat";
 local availableClasses = { "scout", "soldier", "pyro", "demoman", "heavy", "engineer", "medic", "sniper", "spy" };
+local availableSpam = { "none", "branded", "custom" };
 local availableAttackActions = { "start", "stop" };
 local medigunTypedefs = {
     default = { 29, 211, 663, 796, 805, 885, 894, 903, 912, 961, 970 },
@@ -154,10 +155,10 @@ end
 
 -- Follow bot switcher added by Dr_Coomer - Doctor_Coomer#4425
 local function FollowBotSwitcher(args)
-    local fbot = args[1];
+    local fbot = string.lower(args[1]);
 
     if fbot == nil then
-        Respond("Usage: " .. triggerSymbol .. "fbot stop/friends/everyone");
+        Respond("Usage: " .. triggerSymbol .. "fbot stop/friends/all");
         return;
     end
 
@@ -171,7 +172,7 @@ local function FollowBotSwitcher(args)
         fbot = "friends only";
     end
 
-    if fbot == "everyone" then
+    if fbot == "all" then
         Respond("Following everyone!");
         fbot = "all players";
     end
@@ -190,21 +191,17 @@ local function LoadoutChanger(args)
     --Ahhhhh
     --More args, more checks, more statements.
 
-    if lout == "A" then
-        Respond("Switching to loudout A!");
-        lout = "0";
-    elseif lout == "a" then
+    --5/27/2023 -- used the string class in lua to remove a third of the checks
+
+    if string.lower(lout) == "a" then
         Respond("Switching to loudout A!");
         lout = "0";
     elseif lout == "1" then
         Respond("Switching to loudout A!");
-        lout = "0";
+        lout = "0"; --valve counts from zero. to make it user friendly since humans count from one, the args are between 1-4 and not 0-3
     end
-
-    if lout == "B" then
-        Respond("Switching to loutoud B!");
-        lout = "1";
-    elseif lout == "b" then
+    
+    if string.lower(lout) == "b" then
         Respond("Switching to loutoud B!");
         lout = "1";
     elseif lout == "2" then
@@ -212,10 +209,7 @@ local function LoadoutChanger(args)
         lout = "1"
     end
 
-    if lout == "C" then
-        Respond("Switching to loudout C!");
-        lout = "2";
-    elseif lout == "c" then
+    if string.lower(lout) == "c" then
         Respond("Switching to loudout C!");
         lout = "2";
     elseif lout == "3" then
@@ -223,10 +217,7 @@ local function LoadoutChanger(args)
         lout = "2";
     end
 
-    if lout == "D" then
-        Respond("Switching to loudout D!");
-        lout = "3";
-    elseif lout == "d" then
+    if string.lower(lout) == "d" then
         Respond("Switching to loudout D!");
         lout = "3";
     elseif lout == "4" then
@@ -243,7 +234,7 @@ local function TogglelobbyOwnerOnly(args)
     local OwnerOnly = args[1]
 
     if OwnerOnly == nil then
-        Respond("Usage: " .. triggerSymbol .. "OwnerOnly true/false or 1/0");
+        Respond("Usage: " .. triggerSymbol .. "OwnerOnly 1/0 or true/false");
     end
 
     if OwnerOnly == "1" then
@@ -266,15 +257,20 @@ end
 local function ToggleIgnoreFriends(args)
     local IgnoreFriends = args[1]
 
+    if IgnoreFriends == nil then
+        Respond("Usage: " .. triggerSymbol .. "IgnoreFriends 1/0 or true/false")
+        return;
+    end
+
     if IgnoreFriends == "1" then
         IgnoreFriends = 1;
-    elseif IgnoreFriends == "true" then
+    elseif string.lower(IgnoreFriends) == "true" then
         IgnoreFriends = 1;
     end
     
     if IgnoreFriends == "0" then
         IgnoreFriends = 0;
-    elseif IgnoreFriends == "false" then
+    elseif string.lower(IgnoreFriends) == "false" then
         IgnoreFriends = 0;
     end
 
@@ -298,22 +294,26 @@ local function Connect(args)
     client.Command("connect " .. Connect, true);
 end
 
+-- Chatspam switcher added by Dr_Coomer - Doctor_Coomer#4425
 local function cspam(args)
-    local cspam = args[1]
+    local cspam = string.lower(args[1])
 
-    if string.lower(cspam) == "none" then
-        Respond("Stopping chatspam.")
-    elseif string.lower(cspam) == "branded" then
-        Respond("Chatspamming default lmaobox spam")
-    elseif string.lower(cspam) == "custom" then  
-        Respond("Chatspamming spam.txt")
+    if cspam == nil then
+        Respond("Usage: " .. triggerSymbol .. "cspam none/branded/custom")
+        return;
     end
 
+    if not Contains(availableSpam, cspam) then
+        Respond("Unknown chatspam: [" .. cspam .. "]")
+        return;
+    end
+
+    Respond("Chat spamming " .. cspam)
     gui.SetValue("Chat spammer", cspam)
 end
 
 local function SwitchClass(args)
-    local class = args[1];
+    local class = string.lower(args[1]);
 
     if class == nil then
         Respond("Usage: " .. triggerSymbol .. "class <" .. table.concat(availableClasses, ", ") .. ">");

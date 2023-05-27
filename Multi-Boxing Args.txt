@@ -15,7 +15,7 @@
 
 !say , !say_team , !say_party - Says text to the according channel.
 
-!fbot - Switch the follow bot type. Arguments: stop/friends/everyone
+!fbot - Switch the follow bot type. Arguments: stop/friends/all
 !cspam - Change the chatspam type. Arguments: none/branded/custom
 !lout - Change the current loadout. Arguments: a/b/c/d or 1/2/3/4
 
