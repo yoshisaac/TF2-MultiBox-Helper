@@ -1,4 +1,5 @@
 -- Bot helper by __null
+-- Forked by Dr_Coomer -- I want people to note that some comments were made by me, and some were made by the original author. I try to keep what is mine and what was by the original as coherent as possible, even if my rambalings themselfs are not. Such as this long useless comment. The unfinished medi gun and inventory manager is by the original auther and such. I am just possonate about multi-boxing, and when I found this lua I saw things that could be changed around or added, so that multiboxing can be easier and less of a slog of going to each client or computer and manually changing classes, loud out, or turning on and off features.
 
 -- Settings:
 -- Trigger symbol. All commands should start with this symbol.
@@ -8,12 +9,13 @@ local triggerSymbol = "!";
 local lobbyOwnerOnly = true;
 
 -- Check if we want to me mic spamming or not.
-local PlusVoiceRecord;
+local PlusVoiceRecord = true;
 
 -- Constants
 local k_eTFPartyChatType_MemberChat = 1;
 local steamid64Ident = 76561197960265728;
 local partyChatEventName = "party_chat";
+local playerJoinEventName = "player_spawn";
 local availableClasses = { "scout", "soldier", "pyro", "demoman", "heavy", "engineer", "medic", "sniper", "spy" };
 local availableSpam = { "none", "branded", "custom" };
 local availableAttackActions = { "start", "stop" };
@@ -43,13 +45,13 @@ local function SplitString(input, separator)
     if separator == nil then
         separator = "%s";
     end
- 
+
     local t = {};
-    
+
     for str in string.gmatch(input, "([^" .. separator .. "]+)") do
             table.insert(t, str);
     end
-    
+
     return t;
 end
  
@@ -68,7 +70,7 @@ function Contains(table, element)
  
     return false;
 end
- 
+
 -- Game event processor
 local function FireGameEvent(event)
     -- Validation.
@@ -99,7 +101,7 @@ local function FireGameEvent(event)
     end
  
     -- Parsing the command
-    local fullCommand = string.sub(partyMessageText, 2, #partyMessageText);
+    local fullCommand = string.lower(string.sub(partyMessageText, 2, #partyMessageText));
     local commandArgs = SplitString(fullCommand);
  
     -- Validating if we know this command
@@ -179,6 +181,7 @@ local function FollowBotSwitcher(args)
 
     gui.SetValue("follow bot", fbot);
 end
+
 -- Loudout changer added by Dr_Coomer - Doctor_Coomer#4425
 local function LoadoutChanger(args)
     local lout = args[1];
@@ -245,7 +248,6 @@ local function TogglelobbyOwnerOnly(args)
 
     if OwnerOnly == "0" then
         lobbyOwnerOnly = false;
-
     elseif OwnerOnly == "false" then
         lobbyOwnerOnly = false;
     end
@@ -327,10 +329,12 @@ local function SwitchClass(args)
 
     if class == "heavy" then
         -- Wtf Valve
+        -- ^^ true true, I agree.
         class = "heavyweapons";
     end
 
     Respond("Switched to [" .. class .. "]");
+    gui.SetValue("Class Auto-Pick", class); 
     client.Command("join_class " .. class, true);
 end
 
@@ -384,66 +388,29 @@ local function TauntByName(args)
     client.Command("taunt_by_name " .. fullTauntName, true);
 end
 
-local function Attack(args)
-    local action = args[1];
-    local buttonStr = args[2];
-
-    if action == nil or buttonStr == nil then
-        Respond("Usage: " .. triggerSymbol .. "attack <" .. table.concat(availableAttackActions, ", ") .. "> <button (1-3)>");
-        return;
-    end
-
-    if not Contains(availableAttackActions, action) then
-        Respond("Unknown attack option. Available options are: <" .. table.concat(availableAttackActions, ", ") .. ">");
-        return;
-    end
-
-    local button = tonumber(buttonStr);
-
-    if button == nil then
-        Respond("Button is not valid. Available options are: 1-3");
-        return;
-    end
-
-    if button < 0 or button > 3 then
-        Respond("Button is not valid. Available options are: 1-3");
-        return;
-    end
-
-    local modifier = "+";
-
-    if action == "stop" then
-        modifier = "-";
-    end
-
-    if button == 1 then
-        client.Command(modifier .. "attack", true);
-    else
-        client.Command(modifier .. "attack" .. button, true);
-    end
-end
-
 -- Reworked Mic Spam, added by Dr_Coomer - Doctor_Coomer#4425
 local function Speak(args)
     Respond("Listen to me!")
     PlusVoiceRecord = true;
+    client.Command("+voicerecord", true)
 end
 
 local function Shutup(args)
     Respond("I'll shut up now...")
     PlusVoiceRecord = false;
+    client.Command("-voicerecord", true)
 end
 
-callbacks.Register("Draw", "MicSpam", function ()
+local function MicSpam(event)
 
-    --we run this in a loop so it works even when you switch servers.
-    --dont have to re type the command
-    if PlusVoiceRecord == true then
-        client.Command("+voicerecord", true);  -- although it fixes the main issue, it will spam the chat of the bot if the bot doesn't have premium. 
-    elseif PlusVoiceRecord == false then -- A better way but a way that I cant be bothered with right now is to make a check for if the owner has enabled the mic spam, then when the when the bot joins the server
-        client.Command("-voicerecord", true); -- it will only run "+voicerecord" once instead of every frame.
+    if event:GetName() ~= playerJoinEventName then
+        return;
     end
-end)
+
+    if PlusVoiceRecord == true then
+        client.Command("+voicerecord", true);
+    end
+end
 
 -- StoreMilk additions
 
@@ -464,6 +431,10 @@ local function Console(args)
 
     client.Command(cmd, true);
 end
+
+callbacks.Register("Draw", "test", function ()
+    
+end)
 
 -- ============= End of commands' section ============= --
 
@@ -527,37 +498,42 @@ local function Initialize()
     RegisterCommand("tauntn", TauntByName);
 
     -- Attacking
-    RegisterCommand("attack", Attack);
+    --RegisterCommand("attack", Attack); even more useless than Connect
 
     -- Registering event callback
     callbacks.Register("FireGameEvent", FireGameEvent);
-	
+
 	-- StoreMilk additions
 	RegisterCommand("leave", Leave);
-	RegisterCommand("speak", Speak);
-	RegisterCommand("shutup", Shutup);
 	RegisterCommand("console", Console);
 
     -- Broken for now! Will fix later.
     --inventory.Enumerate(EnumerateInventory);
 
     -- [[ Stuff added by Dr_Coomer - Doctor_Coomer#4425 ]] --
-    -- Toggle Follow Bot
+
+    -- Switch Follow Bot
     RegisterCommand("fbot", FollowBotSwitcher);
 
     -- Switch Loadout
     RegisterCommand("lout", LoadoutChanger);
 
     -- Toggle Owner Only Mode
-    RegisterCommand("OwnerOnly", TogglelobbyOwnerOnly);
+    RegisterCommand("owneronly", TogglelobbyOwnerOnly);
 
     -- Connect to server via IP
     RegisterCommand("connect", Connect);
 
     -- Toggle Ignore Friends
-    RegisterCommand("IgnoreFriends", ToggleIgnoreFriends);
+    RegisterCommand("ignorefriends", ToggleIgnoreFriends);
 
+    -- Switch chat spam
     RegisterCommand("cspam", cspam);
+
+    -- Mic Spam toggle
+    RegisterCommand("speak", Speak);
+	RegisterCommand("shutup", Shutup);
+    callbacks.Register("FireGameEvent", MicSpam);
 end
 
 Initialize();
