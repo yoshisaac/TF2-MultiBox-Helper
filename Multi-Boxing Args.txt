@@ -20,7 +20,7 @@
 
 !class - Changes the current class. Arguments: Name of the class. "Random" also works.
 
-!say , !say_team , !say_party - Says text to the according channel.
+!say , !say_team , !say_party - Says text to the according channel. You can use "|" as a space character. "Hello|World" will be printed as "Hello World" in chat.
 
 !fbot - Switch the follow bot type. Arguments: stop/friends/all
 
