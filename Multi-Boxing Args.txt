@@ -1,25 +1,33 @@
 !leave - Abandons the game and doesn't do the automatically rejoining thing. No Arguments.
+
 !speak - Turns on microphone for mic spamming. No Arguments.
-!shutup - Turns off microphone.  No Arguments.
+
+!shutup - Turns off microphone. No Arguments.
+
 !console - Sends the console command provided into the console of the bots. Arguments: the name of the console command
+
 !connect - Connects all the bots to a server via IP. Example: "!connect 172.0.0.1:1234"
 
 !OwnerOnly - Toggle if only the owner of the party should be able to command the bots. Note: When this is set to false, other people in your party can set it back to true. Arguments: 1/0 or true/false
 
 !IgnoreFriends - Toggle if the bots should ignore people it has friended on steam/people that are in the party. Arguments: 1/1 or true/false
 
-!kill - Suicide.  No Arguments.
-!explode - Suicide by explosion.  No Arguments.
+!kill - Suicide. No Arguments.
+
+!explode - Suicide by explosion. No Arguments.
+
 !slot - Changes the current weapon. Arguments: 1-X, between 1 and how ever many slots there are on that class.
-!class - Changes the current class. Arguments: Name of the class.
+
+!class - Changes the current class. Arguments: Name of the class. "Random" also works.
 
 !say , !say_team , !say_party - Says text to the according channel.
 
 !fbot - Switch the follow bot type. Arguments: stop/friends/all
-!cspam - Change the chatspam type. Arguments: none/branded/custom
+
+!cspam - Change the chatspam type and period. Arguments: none/branded/custom or a number 1-60. The first argument can either be a number or a word, but the second argument has to be a number. Example: "!cspam branded 10" "!cspam custom" "!cspam 15" all are valid commands.
+
 !lout - Change the current loadout. Arguments: a/b/c/d or 1/2/3/4
 
-!taunt - Bot will execute a taunt.  No Arguments.
-!tauntn - Bot will execute a taunt by name. Example: !tauntn Taunt: The Schadenfreude 
+!taunt - Bot will execute a taunt. No Arguments.
 
-!attack - Starts or stops attacking with specified button.
+!tauntn - Bot will execute a taunt by name. Example: !tauntn Taunt: The Schadenfreude
