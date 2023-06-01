@@ -11,6 +11,9 @@ local lobbyOwnerOnly = true;
 -- Check if we want to me mic spamming or not.
 local PlusVoiceRecord = true;
 
+-- Keep the table of command arguments outside of all functions, so we can just jack this when ever we need anymore than a single argument.
+local commandArgs;
+
 -- Constants
 local k_eTFPartyChatType_MemberChat = 1;
 local steamid64Ident = 76561197960265728;
@@ -18,7 +21,7 @@ local partyChatEventName = "party_chat";
 local playerJoinEventName = "player_spawn";
 local availableClasses = { "scout", "soldier", "pyro", "demoman", "heavy", "engineer", "medic", "sniper", "spy" };
 local availableSpam = { "none", "branded", "custom" };
-local availableAttackActions = { "start", "stop" };
+local availableSpamSecondsString = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46", "47", "48", "49", "50", "51", "52", "53", "54", "55", "56", "57", "58", "59", "60"} -- Made chatgpt write this lmao
 local medigunTypedefs = {
     default = { 29, 211, 663, 796, 805, 885, 894, 903, 912, 961, 970 },
     quickfix = { 411 },
@@ -102,7 +105,7 @@ local function FireGameEvent(event)
  
     -- Parsing the command
     local fullCommand = string.lower(string.sub(partyMessageText, 2, #partyMessageText));
-    local commandArgs = SplitString(fullCommand);
+    commandArgs = SplitString(fullCommand);
  
     -- Validating if we know this command
     local commandName = commandArgs[1];
@@ -298,20 +301,52 @@ end
 
 -- Chatspam switcher added by Dr_Coomer - Doctor_Coomer#4425
 local function cspam(args)
-    local cspam = string.lower(args[1])
+    local cspam = args[1];
 
     if cspam == nil then
         Respond("Usage: " .. triggerSymbol .. "cspam none/branded/custom")
         return;
     end
 
+    local cspamSeconds = table.remove(commandArgs, 2)
+
+    --Code:
+    --Readable: N
+    --Works: Y
+    --I hope no one can see how bad this is, oh wait...
+
     if not Contains(availableSpam, cspam) then
+        if Contains(availableSpamSecondsString, cspam) then
+            print("switching seconds")
+            Respond("Chat spamming with " .. cspam .. " second interval")
+            gui.SetValue("Chat Spam Interval (s)", tonumber(cspam, 10))
+            return;
+        end
+
         Respond("Unknown chatspam: [" .. cspam .. "]")
         return;
+
     end
 
-    Respond("Chat spamming " .. cspam)
-    gui.SetValue("Chat spammer", cspam)
+    if Contains(availableSpam, cspam) then
+        if Contains(availableSpamSecondsString, cspamSeconds) then
+            print("switching both")
+            gui.SetValue("Chat Spam Interval (s)", tonumber(cspamSeconds, 10)) --I hate this god damn "tonumber" function. Doesn't do as advertised. It needs a second argument called "base". Setting it anything over 10, then giving the seconds input anything over 9, will then force it to be to that number. Seconds 1-9 will work just fine, but if you type 10 it will be forced to that number. --mentally instane explination
+            gui.SetValue("Chat spammer", cspam)
+            Respond("Chat spamming " .. cspam .. " with " .. tostring(cspamSeconds) .. " second interval")
+            return;
+        end
+    end
+
+    if not Contains(availableSpamSecondsString, cspam) then
+        if Contains(availableSpam, cspam) then
+            print("switching spam")
+            gui.SetValue("Chat spammer", cspam)
+            Respond("Chat spamming " .. cspam)
+            return;
+        end
+    end
+
 end
 
 local function SwitchClass(args)
