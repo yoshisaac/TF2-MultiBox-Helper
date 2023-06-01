@@ -375,35 +375,35 @@ end
 
 local function Say(args)
     local msg = args[1];
-
+ 
     if msg == nil then
         Respond("Usage: " .. triggerSymbol .. "say <text>");
         return;
     end
-
-    client.Command("say " .. msg, true);
+ 
+    client.Command("say " .. string.gsub(msg, "|", " "), true);
 end
-
+ 
 local function SayTeam(args)
     local msg = args[1];
-
+ 
     if msg == nil then
         Respond("Usage: " .. triggerSymbol .. "say_team <text>");
         return;
     end
     
-    client.Command("say_team " .. msg, true);
+    client.Command("say_team " .. string.gsub(msg, "|", " "), true);
 end
-
+ 
 local function SayParty(args)
     local msg = args[1];
-
+ 
     if msg == nil then
         Respond("Usage: " .. triggerSymbol .. "say_party <text>");
         return;
     end
-
-    client.Command("say_party " .. msg, true);
+ 
+    client.Command("say_party " .. string.gsub(msg, "|", " "), true);
 end
 
 local function Taunt(args)
