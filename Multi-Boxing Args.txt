@@ -31,3 +31,7 @@
 !taunt - Bot will execute a taunt. No Arguments.
 
 !tauntn - Bot will execute a taunt by name. Example: !tauntn Taunt: The Schadenfreude
+
+!spin - Toggle anti-aim. Arguments: on/off or 1/0
+
+!duck - Toggle ducking & duck speed. Arguments: on/off or 1/0

@@ -160,12 +160,14 @@ end
 
 -- Follow bot switcher added by Dr_Coomer - Doctor_Coomer#4425
 local function FollowBotSwitcher(args)
-    local fbot = string.lower(args[1]);
+    local fbot = args[1];
 
     if fbot == nil then
         Respond("Usage: " .. triggerSymbol .. "fbot stop/friends/all");
         return;
     end
+
+    fbot = string.lower(args[1]);
 
     if fbot == "stop" then
         Respond("Disabling followbot!");
@@ -241,17 +243,18 @@ local function TogglelobbyOwnerOnly(args)
 
     if OwnerOnly == nil then
         Respond("Usage: " .. triggerSymbol .. "OwnerOnly 1/0 or true/false");
+        return;
     end
 
     if OwnerOnly == "1" then
         lobbyOwnerOnly = true;
-    elseif OwnerOnly == "true" then
+    elseif string.lower(OwnerOnly) == "true" then
         lobbyOwnerOnly = true;
     end
 
     if OwnerOnly == "0" then
         lobbyOwnerOnly = false;
-    elseif OwnerOnly == "false" then
+    elseif string.lower(OwnerOnly) == "false" then
         lobbyOwnerOnly = false;
     end
 
@@ -309,6 +312,7 @@ local function cspam(args)
     end
 
     local cspamSeconds = table.remove(commandArgs, 2)
+    cspam = string.lower(args[1])
 
     --Code:
     --Readable: N
@@ -346,16 +350,25 @@ local function cspam(args)
             return;
         end
     end
-
 end
 
+-- Auto unzoom. Needs improvement. Took it from some random person in the telegram months ago.
+local function unzoom( cmd )
+    local player = entities.GetLocalPlayer( );
+      if (player == nil or not player:IsAlive()) then
+      return end
+     if (player:InCond( TFCond_Zoomed)) then cmd.buttons = cmd.buttons | IN_ATTACK2 end
+  end
+
 local function SwitchClass(args)
-    local class = string.lower(args[1]);
+    local class = args[1];
 
     if class == nil then
         Respond("Usage: " .. triggerSymbol .. "class <" .. table.concat(availableClasses, ", ") .. ">");
         return;
     end
+
+    class = string.lower(args[1]);
 
     if not Contains(availableClasses, class) then
         Respond("Unknown class [" .. class .. "]");
@@ -375,18 +388,18 @@ end
 
 local function Say(args)
     local msg = args[1];
- 
+
     if msg == nil then
         Respond("Usage: " .. triggerSymbol .. "say <text>");
         return;
     end
- 
+
     client.Command("say " .. string.gsub(msg, "|", " "), true);
 end
- 
+
 local function SayTeam(args)
     local msg = args[1];
- 
+
     if msg == nil then
         Respond("Usage: " .. triggerSymbol .. "say_team <text>");
         return;
@@ -394,15 +407,15 @@ local function SayTeam(args)
     
     client.Command("say_team " .. string.gsub(msg, "|", " "), true);
 end
- 
+
 local function SayParty(args)
     local msg = args[1];
- 
+
     if msg == nil then
         Respond("Usage: " .. triggerSymbol .. "say_party <text>");
         return;
     end
- 
+
     client.Command("say_party " .. string.gsub(msg, "|", " "), true);
 end
 
@@ -470,6 +483,59 @@ end
 callbacks.Register("Draw", "test", function ()
     
 end)
+
+-- thyraxis's idea
+local function ducktoggle(args)
+    local duck = args[1]
+
+    if duck == nil then
+        Respond("Usage: " .. triggerSymbol .. "duck on/off");
+        return;
+    end
+
+    if duck == "on" then
+        duck = 1;
+        client.Command("+duck", true);
+    elseif duck == "1" then
+        duck = 1;
+        client.Command("+duck", true);
+    end
+    
+    if duck == "off" then
+        duck = 0;
+        client.Command("-duck", true);
+    elseif duck == "0" then
+        duck = 0;
+        client.Command("-duck", true);
+    end
+
+    gui.SetValue("duck speed", duck);
+    Respond("Ducking is now " .. duck)
+end
+
+local function spintoggle(args)
+    local spin = args[1]
+
+    if spin == nil then
+        Respond("Usage: " .. triggerSymbol .. "spin on/off");
+        return;
+    end
+
+    if spin == "on" then
+        spin = 1;
+    elseif spin == "1" then
+        spin = 1;
+    end
+    
+    if spin == "off" then
+        spin = 0;
+    elseif spin == "0" then
+        spin = 0;
+    end
+
+    gui.SetValue("Anti aim", spin);
+    Respond("Anti-Aim is now " .. spin)
+end
 
 -- ============= End of commands' section ============= --
 
@@ -569,6 +635,16 @@ local function Initialize()
     RegisterCommand("speak", Speak);
 	RegisterCommand("shutup", Shutup);
     callbacks.Register("FireGameEvent", MicSpam);
+
+    --Auto unzoom
+    callbacks.Register("CreateMove", "unzoom", unzoom)
+
+        -- [[ Stuff added by thyraxis ]] --
+
+    -- Duck Speed
+    RegisterCommand("duck", ducktoggle)
+    -- Spin
+    RegisterCommand("spin", spintoggle)
 end
 
 Initialize();
