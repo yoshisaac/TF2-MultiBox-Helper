@@ -372,7 +372,7 @@ local function SwitchClass(args)
     gui.SetValue("Class Auto-Pick", class); 
     client.Command("join_class " .. class, true);
 end
-
+-- this is was the only fix to fix the space problem in my mind btw
 local function Say(args)
     local msg = args[1];
  
@@ -424,29 +424,86 @@ local function TauntByName(args)
 end
 
 -- Reworked Mic Spam, added by Dr_Coomer - Doctor_Coomer#4425
-local function Speak(args)
-    Respond("Listen to me!")
-    PlusVoiceRecord = true;
-    client.Command("+voicerecord", true)
-end
+--local function Speak(args)
+--    Respond("Listen to me!")
+--    PlusVoiceRecord = true;
+--    client.Command("+voicerecord", true)
+--end
 
-local function Shutup(args)
-    Respond("I'll shut up now...")
-    PlusVoiceRecord = false;
-    client.Command("-voicerecord", true)
-end
+--local function Shutup(args)
+--    Respond("I'll shut up now...")
+--    PlusVoiceRecord = false;
+--    client.Command("-voicerecord", true)
+--end
 
-local function MicSpam(event)
+--local function MicSpam(event)
 
-    if event:GetName() ~= playerJoinEventName then
+--    if event:GetName() ~= playerJoinEventName then
+--        return;
+--    end
+
+--    if PlusVoiceRecord == true then
+--        client.Command("+voicerecord", true);
+--    end
+--end
+-- the code above wasnt long enough and splited code so no
+
+-- some reason it doesnt work in function thanks lua and im SO STUPID. -Thy
+-- NEVER touch this code -Thy
+local madealiasmic = "No"
+local onoroffaliasmic = "off"
+
+local function amic(args)
+    local amictr = args[1];
+    if amictr == nil then
+        Respond("Alias: run (runs the alias), stop (stops the alias from running), on (sets alias to on), off (sets alias to off)");
         return;
     end
 
-    if PlusVoiceRecord == true then
-        client.Command("+voicerecord", true);
+    if amictr == "run" then
+        if madealiasmic == "Yes" then
+            client.Command("v", true);
+            Respond("Alias: Running")
+        end
+        if madealiasmic == "No" then
+            Respond("Alias: mic wasnt created please create one by doing '!mic on' and it will create one it only changes alias")
+        end
+    end
+    if amictr == "on" then
+        if onoroffaliasmic == "on" then
+            Respond("Alias: Already on")
+        end
+        if onoroffaliasmic == "off" then
+            client.Command('alias v "+voicerecord;wait 100;v"', true);
+            madealiasmic = "Yes"
+            onoroffaliasmic = "on"
+            Respond("Alias: Set from off to on!")
+        end
+    end
+    if amictr == "off" then
+        if onoroffaliasmic == "off" then
+            Respond("Alias: Already off")
+        end
+        if onoroffaliasmic == "on" then
+            client.Command('alias v "-voicerecord;wait 100;v"', true);
+            madealiasmic = "Yes"
+            onoroffaliasmic = "off"
+            Respond("Alias: Set from on to off!")
+        end
+    end
+    if amictr == "stop" then
+        if madealiasmic == "No" then
+            Respond("Alias: mic was not found")
+        end
+        if madealiasmic == "Yes" then
+            client.Command('alias v "-voicerecord"', true);
+            client.Command("-voicerecord", true);
+            madealiasmic = "No"
+            onoroffaliasmic = "off"
+            Respond("Alias: Stopped")
+        end
     end
 end
-
 -- StoreMilk additions
 
 local function Leave(args)
@@ -465,6 +522,28 @@ local function Console(args)
     end
 
     client.Command(cmd, true);
+end
+
+local function duckspeedon(args)
+    Respond("Lets get duckin")
+    gui.SetValue("duck speed", 1);
+    client.Command("+duck", true);
+end
+    
+local function duckspeedoff(args)
+    Respond("Alright no more duckin :sob:")
+    gui.SetValue("duck speed", 0);
+    client.Command("-duck", true);
+end
+
+local function turnonspin(args)
+    Respond("Lets get spining boys!")
+    gui.SetValue("Anti aim", 1);
+end
+
+local function turnoffspin(args)
+    Respond("No more spin boys :(")
+    gui.SetValue("Anti aim", 0);
 end
 
 callbacks.Register("Draw", "test", function ()
@@ -565,10 +644,20 @@ local function Initialize()
     -- Switch chat spam
     RegisterCommand("cspam", cspam);
 
-    -- Mic Spam toggle
-    RegisterCommand("speak", Speak);
-	RegisterCommand("shutup", Shutup);
-    callbacks.Register("FireGameEvent", MicSpam);
+    -- Mic Spam toggle (changed by thyraxis use another one)
+    --RegisterCommand("speak", Speak);
+	--RegisterCommand("shutup", Shutup);
+    --callbacks.Register("FireGameEvent", MicSpam);
+    -- [[ Stuff added by thyraxis ]] --
+	
+    -- Duck Speed
+    RegisterCommand("duckon", duckspeedon)
+    RegisterCommand("duckoff", duckspeedoff)
+    -- Spin
+    RegisterCommand("spinoff", turnoffspin)
+    RegisterCommand("spinon", turnonspin)
+    -- Mic
+    RegisterCommand("mic", amic)
 end
 
 Initialize();
