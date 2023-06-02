@@ -450,8 +450,8 @@ end
 
 -- some reason it doesnt work in function thanks lua and im SO STUPID. -Thy
 -- NEVER touch this code -Thy
-local madealiasmic = "No"
-local onoroffaliasmic = "off"
+local madealiasmic = false
+local onoroffaliasmic = false
 
 local function amic(args)
     local amictr = args[1];
@@ -461,45 +461,45 @@ local function amic(args)
     end
 
     if amictr == "run" then
-        if madealiasmic == "Yes" then
+        if madealiasmic == true then
             client.Command("v", true);
             Respond("Alias: Running")
         end
-        if madealiasmic == "No" then
+        if madealiasmic == false then
             Respond("Alias: mic wasnt created please create one by doing '!mic on' and it will create one it only changes alias")
         end
     end
     if amictr == "on" then
-        if onoroffaliasmic == "on" then
+        if onoroffaliasmic == true then
             Respond("Alias: Already on")
         end
-        if onoroffaliasmic == "off" then
+        if onoroffaliasmic == false then
             client.Command('alias v "+voicerecord;wait 100;v"', true);
-            madealiasmic = "Yes"
-            onoroffaliasmic = "on"
+            madealiasmic = true
+            onoroffaliasmic = true
             Respond("Alias: Set from off to on!")
         end
     end
     if amictr == "off" then
-        if onoroffaliasmic == "off" then
+        if onoroffaliasmic == false then
             Respond("Alias: Already off")
         end
-        if onoroffaliasmic == "on" then
+        if onoroffaliasmic == true then
             client.Command('alias v "-voicerecord;wait 100;v"', true);
-            madealiasmic = "Yes"
-            onoroffaliasmic = "off"
+            madealiasmic = true
+            onoroffaliasmic = false
             Respond("Alias: Set from on to off!")
         end
     end
     if amictr == "stop" then
-        if madealiasmic == "No" then
+        if madealiasmic == false then
             Respond("Alias: mic was not found")
         end
-        if madealiasmic == "Yes" then
+        if madealiasmic == true then
             client.Command('alias v "-voicerecord"', true);
             client.Command("-voicerecord", true);
-            madealiasmic = "No"
-            onoroffaliasmic = "off"
+            madealiasmic = false
+            onoroffaliasmic = false
             Respond("Alias: Stopped")
         end
     end
