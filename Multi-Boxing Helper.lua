@@ -452,7 +452,7 @@ end
 -- NEVER touch this code -Thy
 local madealiasmic = false
 local onoroffaliasmic = false
-
+local alreadyrunningmic = false
 local function amic(args)
     local amictr = args[1];
     if amictr == nil then
@@ -462,8 +462,14 @@ local function amic(args)
 
     if amictr == "run" then
         if madealiasmic == true then
-            client.Command("v", true);
-            Respond("Alias: Running")
+           if alreadyrunningmic == false then
+                client.Command("v", true);
+                Respond("Alias: Running")
+                alreadyrunningmic = true
+           end
+           if alreadyrunningmic == true then
+                Respond("Alias: Already running")
+           end
         end
         if madealiasmic == false then
             Respond("Alias: mic wasnt created please create one by doing '!mic on' and it will create one it only changes alias")
@@ -500,6 +506,7 @@ local function amic(args)
             client.Command("-voicerecord", true);
             madealiasmic = false
             onoroffaliasmic = false
+            alreadyrunningmic = false
             Respond("Alias: Stopped")
         end
     end
