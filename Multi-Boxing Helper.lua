@@ -9,7 +9,13 @@ local triggerSymbol = "!";
 local lobbyOwnerOnly = true;
 
 -- Check if we want to me mic spamming or not.
-local PlusVoiceRecord = true;
+local PlusVoiceRecord = false;
+
+-- Global check for if we want to autovote
+local AutoVoteCheck = false;
+
+-- Global check for if we want ZoomDistance to be enabled
+local ZoomDistanceCheck = false;
 
 -- Keep the table of command arguments outside of all functions, so we can just jack this when ever we need anymore than a single argument.
 local commandArgs;
@@ -20,6 +26,7 @@ local steamid64Ident = 76561197960265728;
 local partyChatEventName = "party_chat";
 local playerJoinEventName = "player_spawn";
 local availableClasses = { "scout", "soldier", "pyro", "demoman", "heavy", "engineer", "medic", "sniper", "spy", "random" };
+local availableOnOffArguments = { "1", "0", "on", "off" };
 local availableSpam = { "none", "branded", "custom" };
 local availableSpamSecondsString = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46", "47", "48", "49", "50", "51", "52", "53", "54", "55", "56", "57", "58", "59", "60"} -- Made chatgpt write this lmao
 local medigunTypedefs = {
@@ -199,8 +206,6 @@ local function LoadoutChanger(args)
     --Ahhhhh
     --More args, more checks, more statements.
 
-    --5/27/2023 -- used the string class in lua to remove a third of the checks
-
     if string.lower(lout) == "a" then
         Respond("Switching to loudout A!");
         lout = "0";
@@ -241,20 +246,20 @@ end
 local function TogglelobbyOwnerOnly(args)
     local OwnerOnly = args[1]
 
-    if OwnerOnly == nil then
-        Respond("Usage: " .. triggerSymbol .. "OwnerOnly 1/0 or true/false");
+    if OwnerOnly == nil or not Contains(availableOnOffArguments, OwnerOnly) then
+        Respond("Usage: " .. triggerSymbol .. "OwnerOnly 1/0 or on/off");
         return;
     end
 
     if OwnerOnly == "1" then
         lobbyOwnerOnly = true;
-    elseif string.lower(OwnerOnly) == "true" then
+    elseif string.lower(OwnerOnly) == "on" then
         lobbyOwnerOnly = true;
     end
 
     if OwnerOnly == "0" then
         lobbyOwnerOnly = false;
-    elseif string.lower(OwnerOnly) == "false" then
+    elseif string.lower(OwnerOnly) == "off" then
         lobbyOwnerOnly = false;
     end
 
@@ -265,32 +270,26 @@ end
 local function ToggleIgnoreFriends(args)
     local IgnoreFriends = args[1]
 
-    if IgnoreFriends == nil then
-        Respond("Usage: " .. triggerSymbol .. "IgnoreFriends 1/0 or true/false")
+    if IgnoreFriends == nil or not Contains(availableOnOffArguments, IgnoreFriends) then
+        Respond("Usage: " .. triggerSymbol .. "IgnoreFriends 1/0 or on/off")
         return;
     end
 
     if IgnoreFriends == "1" then
         IgnoreFriends = 1;
-    elseif string.lower(IgnoreFriends) == "true" then
+    elseif string.lower(IgnoreFriends) == "on" then
         IgnoreFriends = 1;
     end
     
     if IgnoreFriends == "0" then
         IgnoreFriends = 0;
-    elseif string.lower(IgnoreFriends) == "false" then
+    elseif string.lower(IgnoreFriends) == "off" then
         IgnoreFriends = 0;
     end
 
     Respond("Ignore Steam Friends is now: " .. IgnoreFriends)
     gui.SetValue("Ignore Steam Friends", IgnoreFriends)
 end
-
---[[
-callbacks.Register("Draw", "SwitchCheckForlobbyOwnerOnlyBool", function()
-    print(lobbyOwnerOnly); --making sure this even works lmao
-end)
---]]
 
 -- connect to servers via IP re implemented by Dr_Coomer - Doctor_Coomer#4425
 --Context: There was a registered callback for a command called "connect" but there was no function for it. So, via the name of the registered callback, I added it how I thought he would have.
@@ -335,7 +334,7 @@ local function cspam(args)
     if Contains(availableSpam, cspam) then
         if Contains(availableSpamSecondsString, cspamSeconds) then
             print("switching both")
-            gui.SetValue("Chat Spam Interval (s)", tonumber(cspamSeconds, 10)) --I hate this god damn "tonumber" function. Doesn't do as advertised. It needs a second argument called "base". Setting it anything over 10, then giving the seconds input anything over 9, will then force it to be to that number. Seconds 1-9 will work just fine, but if you type 10 it will be forced to that number. --mentally instane explination
+            gui.SetValue("Chat Spam Interval (s)", tonumber(cspamSeconds, 10)) --I hate this god damn "tonumber" function. Doesn't do as advertised. It needs a second argument called "base". Setting it anything over 10, then giving the seconds input anything over 9, will then force it to be to that number. Seconds 1-9 will work just fine, but if you type 10 it will be forced to that number. --mentally insane explination
             gui.SetValue("Chat spammer", cspam)
             Respond("Chat spamming " .. cspam .. " with " .. tostring(cspamSeconds) .. " second interval")
             return;
@@ -352,13 +351,286 @@ local function cspam(args)
     end
 end
 
+
+-- ZoomDistance from cathook, added by Dr_Coomer
+-- Zoom Distance means that it will automatically zoomin when you are in a cirtant distance from a player
+-- it will not change the visual zoom distance when scoping in
+local IsInRange = false;
+local closestplayer
+
+local CurrentClosestX
+local CurrentClosestY
+
+local Distance = 500; --defaults distance
+
+local function zoomdistance(args)
+    local zoomdistance = args[1]
+    local zoomdistanceDistance = tonumber(table.remove(commandArgs, 2))
+
+    if zoomdistance == nil then
+        Respond("Example: " .. triggerSymbol .. "zoomdistance on 650")
+        return
+    end
+
+    zoomdistance = string.lower(args[1])
+
+    if zoomdistance == "1" then
+        ZoomDistanceCheck = true
+    elseif zoomdistance == "on" then
+        ZoomDistanceCheck = true
+    end
+
+    if zoomdistance == "0" then
+        ZoomDistanceCheck = false
+    elseif zoomdistance == "off" then
+        ZoomDistanceCheck = false
+    end
+
+    if zoomdistanceDistance == nil then
+        return;
+    end
+
+    Distance = zoomdistanceDistance
+
+end
+
+function DistanceFrom(x1, y1, x2, y2) --Maths :nerd:
+    return math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
+end
+
+local function GetPlayerLocations()
+    ::Return:: --I don't trust the normal return when doing this
+
+    local localp = entities.GetLocalPlayer()
+    local players = entities.FindByClass("CTFPlayer")
+
+    if ZoomDistanceCheck == false then
+        return;
+    end
+
+    if localp == nil then
+        return;
+    end
+
+    local localpOrigin = localp:GetAbsOrigin();
+    local localX = localpOrigin.x
+    local localY = localpOrigin.y
+
+    for i, player in ipairs(players) do
+
+        --Skip players we don't want to enumerate
+        if not player:IsAlive() then
+            goto Ignore
+        end
+
+        if player:IsDormant() then
+            goto Ignore    
+        end
+
+        if player == localp then
+            goto Ignore
+        end
+        if player:GetTeamNumber() == localp:GetTeamNumber() then
+            goto Ignore
+        end
+
+        --Get the current enumerated player's vector2 from their vector3
+        local Vector3Players = player:GetAbsOrigin()
+        local X = Vector3Players.x
+        local Y = Vector3Players.y
+
+        if IsInRange == false then
+            if DistanceFrom(localX, localY, X, Y) < Distance then --If we get someone that is in range then we save who they are and their vector2
+                IsInRange = true;
+
+                closestplayer = player;
+
+                CurrentClosestX = closestplayer:GetAbsOrigin().x
+                CurrentClosestY = closestplayer:GetAbsOrigin().y
+            end
+        end
+        ::Ignore::
+    end
+
+    if IsInRange == true then
+
+        CurrentClosestX = closestplayer:GetAbsOrigin().x
+        CurrentClosestY = closestplayer:GetAbsOrigin().y
+
+        if closestplayer:IsDormant() then
+            CurrentClosestX = nil
+            CurrentClosestY = nil
+            closestplayer = nil;
+
+            IsInRange = false;
+            goto Return;
+        end
+
+        if not closestplayer:IsAlive() then --Check if the current closest player has died
+
+            CurrentClosestX = nil
+            CurrentClosestY = nil
+            closestplayer = nil;
+
+            IsInRange = false;
+            goto Return;
+        end
+
+        if DistanceFrom(localX, localY, CurrentClosestX, CurrentClosestY) > Distance then --Check if they have left our range
+
+            CurrentClosestX = nil
+            CurrentClosestY = nil
+            closestplayer = nil;
+
+            IsInRange = false;
+            goto Return;
+        end
+    end
+end
+
+
 -- Auto unzoom. Needs improvement. Took it from some random person in the telegram months ago.
-local function unzoom( cmd )
-    local player = entities.GetLocalPlayer( );
-      if (player == nil or not player:IsAlive()) then
-      return end
-     if (player:InCond( TFCond_Zoomed)) then cmd.buttons = cmd.buttons | IN_ATTACK2 end
-  end
+local stopScope = false;
+local countUp = 0;
+local function AutoUnZoom(cmd)
+    local localp = entities.GetLocalPlayer();
+
+    if (localp == nil or not localp:IsAlive()) then
+        return;
+    end
+
+    if IsInRange == true then
+        if not (localp:InCond( TFCond_Zoomed)) then 
+            cmd.buttons = cmd.buttons | IN_ATTACK2 
+        end
+    elseif IsInRange == false then
+        if stopScope == false then
+            if (localp:InCond( TFCond_Zoomed)) then 
+                cmd.buttons = cmd.buttons | IN_ATTACK2 
+                stopScope = true;
+            end
+        end
+    end
+
+
+    --Wait logic
+    if stopScope == true then
+        countUp = countUp + 1;
+        if countUp == 66 then 
+            countUp = 0;
+            stopScope = false;
+        end
+    end
+end
+
+--Toggle noisemaker spam, Dr_Coomer
+local function noisemaker(args)
+    local nmaker = args[1];
+
+    if nmaker == nil or not Contains(availableOnOffArguments, nmaker) then
+        Respond("Usage: " .. triggerSymbol .. "nmaker 1/0 or on/off")
+        return;
+    end
+
+    if nmaker == "1" then
+        nmaker = 1;
+    elseif string.lower(nmaker) == "on" then
+        nmaker = 1;
+    end
+    
+    if nmaker == "0" then
+        nmaker = 0;
+    elseif string.lower(nmaker) == "off" then
+        nmaker = 0;
+    end
+
+    Respond("Noise maker spam is now: " .. nmaker)
+    gui.SetValue("Noisemaker Spam", nmaker)
+end
+
+-- Autovote casting, added by Dr_Coomer, pasted from drack's autovote caster to vote out bots (proof I did this before drack887: https://free.novoline.pro/ouffcjhnm8yhfjomdf.png)
+local function autovotekick(args) -- toggling the boolean
+    local autovotekick = args[1]
+
+    if autovotekick == nil or not Contains(availableOnOffArguments, autovotekick) then
+        Respond("Usage: " .. triggerSymbol .. "autovotekick 1/0 or on/off")
+        return;
+    end
+
+    if autovotekick == "1" then
+        AutoVoteCheck = true;
+    elseif string.lower(autovotekick) == "on" then
+        AutoVoteCheck = true;
+    end
+    
+    if autovotekick == "0" then
+        AutoVoteCheck = false;
+    elseif string.lower(autovotekick) == "off" then
+        AutoVoteCheck = false;
+    end
+
+    Respond("Autovoting is now " .. autovotekick)
+end
+
+local timer = 0;
+local function autocastvote() --all the logic to actually cast the vote
+    if AutoVoteCheck == false then
+        return;
+    end
+        if (gamerules.IsMatchTypeCasual() and timer <= os.time()) then
+            timer = os.time() + 2
+            local resources = entities.GetPlayerResources()
+            local me = entities.GetLocalPlayer()
+            if (resources ~= nil and me ~= nil) then
+                local teams = resources:GetPropDataTableInt("m_iTeam")
+                local userids = resources:GetPropDataTableInt("m_iUserID")
+                local accounts = resources:GetPropDataTableInt("m_iAccountID")
+                local partymembers = party.GetMembers()
+
+                for i, m in pairs(teams) do
+                    local steamid = "[U:1:" .. accounts[i] .. "]"
+                    local playername = client.GetPlayerNameByUserID(userids[i])
+
+                    if (me:GetTeamNumber() == m and userids[i] ~= 0 and steamid ~= partymembers[1] and
+                            steamid ~= partymembers[2] and
+                            steamid ~= partymembers[3] and
+                            steamid ~= partymembers[4] and
+                            steamid ~= partymembers[5] and
+                            steamid ~= partymembers[6] and
+                            steamid ~= "[U:1:0]" and
+                            not steam.IsFriend(steamid) and
+                            playerlist.GetPriority(userids[i]) > -1) then
+                        --Respond("Calling Vote on player " .. playername .. " " .. steamid) --This gets spammed a lot
+                        client.Command('callvote kick "' .. userids[i] .. ' cheating"', true)
+                        goto CalledVote
+                    end
+                end
+            end
+        end
+        ::CalledVote::
+end
+
+local function responsecheck_message(msg) --If the vote failed respond with the reason
+    if AutoVoteCheck == true then
+        if (msg:GetID() == CallVoteFailed) then
+            local reason = msg:ReadByte()
+            local cooldown = msg:ReadInt(16)
+
+            if (cooldown > 0) then
+                if cooldown == 65535 then
+                    Respond("Something odd is going on, waiting even longer.")
+                    cooldown = 35
+                    timer = os.time() + cooldown
+                    return;
+                end
+
+                Respond("Vote Cooldown " .. cooldown .. " Seconds") --65535
+                timer = os.time() + cooldown
+            end
+        end
+    end
+end
+--End of the Autovote casting functions
 
 local function SwitchClass(args)
     local class = args[1];
@@ -480,16 +752,12 @@ local function Console(args)
     client.Command(cmd, true);
 end
 
-callbacks.Register("Draw", "test", function ()
-    
-end)
-
 -- thyraxis's idea
 local function ducktoggle(args)
     local duck = args[1]
 
-    if duck == nil then
-        Respond("Usage: " .. triggerSymbol .. "duck on/off");
+    if duck == nil or not Contains(availableOnOffArguments, duck) then
+        Respond("Usage: " .. triggerSymbol .. "duck 1/0 or on/off");
         return;
     end
 
@@ -516,8 +784,8 @@ end
 local function spintoggle(args)
     local spin = args[1]
 
-    if spin == nil then
-        Respond("Usage: " .. triggerSymbol .. "spin on/off");
+    if spin == nil or not Contains(availableOnOffArguments, spin) then
+        Respond("Usage: " .. triggerSymbol .. "spin 1/0 or on/off");
         return;
     end
 
@@ -538,6 +806,16 @@ local function spintoggle(args)
 end
 
 -- ============= End of commands' section ============= --
+
+local function newmap_event(event) --reset what ever data we want to reset when we switch maps
+    if (event:GetName() == "game_newmap") then
+        timer = 0
+        IsInRange = false;
+        CurrentClosestX = nil
+        CurrentClosestY = nil
+        closestplayer = nil;
+    end
+end
 
 -- This method is an inventory enumerator. Used to search for mediguns in the inventory.
 local function EnumerateInventory(item)
@@ -576,6 +854,10 @@ local function RegisterCommand(commandName, callback)
 
     commands[commandName] = callback;
 end
+
+callbacks.Register("Draw", "test", function ()
+    
+end)
 
 -- Sets up command list and registers an event hook
 local function Initialize()
@@ -636,8 +918,23 @@ local function Initialize()
 	RegisterCommand("shutup", Shutup);
     callbacks.Register("FireGameEvent", MicSpam);
 
+    --Toggle noisemaker
+    RegisterCommand("nmaker", noisemaker)
+
+    --Autovoting
+    RegisterCommand("autovotekick", autovotekick)
+    callbacks.Register("Draw", "autocastvote", autocastvote)
+    callbacks.Register("DispatchUserMessage", "responsecheck_message", responsecheck_message)
+
+    --Zoom Distance
+    RegisterCommand("zoomdistance", zoomdistance)
+    callbacks.Register("CreateMove", "GetPlayerLocations", GetPlayerLocations)
+
     --Auto unzoom
-    callbacks.Register("CreateMove", "unzoom", unzoom)
+    callbacks.Register("CreateMove", "unzoom", AutoUnZoom)
+
+    --New Map Event
+    callbacks.Register("FireGameEvent", "newmap_event", newmap_event)
 
         -- [[ Stuff added by thyraxis ]] --
 
