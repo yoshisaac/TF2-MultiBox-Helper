@@ -454,6 +454,11 @@ local function GetPlayerLocations()
 
     if IsInRange == true then
 
+        if CurrentClosestX == nil or CurrentClosestY == nil then
+            IsInRange = false;
+            goto Return;
+        end
+
         CurrentClosestX = closestplayer:GetAbsOrigin().x
         CurrentClosestY = closestplayer:GetAbsOrigin().y
 
