@@ -7,3 +7,11 @@ Null__ does not have any sort of github. He only uploaded his source to pastebin
 This lua is to be run on every instance of Team Fortress 2. To run the lua, the Team Fortress 2 game client needs to be loaded with the lmaobox beta build. You can enable this build by making a shortcut to the lmaobox loader and adding -beta to the properties. You then run this shortcut with the -beta in its properties.
  
 The commands you run have to be sent through partychat. You can find the command docs and arguments here: https://github.com/yoshisaac/TF2-MultiBox-Helper/wiki/Commands-Arguments-Usage
+
+# Features
+* Autvote Casting
+* Zoom Distance
+* Auto Unzoom
+* Toggle cheat features
+* Send to server via IP
+* And plenty more
