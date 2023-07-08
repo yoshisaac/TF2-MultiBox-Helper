@@ -399,16 +399,15 @@ function DistanceFrom(x1, y1, x2, y2) --Maths :nerd:
 end
 
 local function GetPlayerLocations()
-    ::Return:: --I don't trust the normal return when doing this
 
     local localp = entities.GetLocalPlayer()
     local players = entities.FindByClass("CTFPlayer")
 
-    if ZoomDistanceCheck == false then
+    if localp == nil then
         return;
     end
 
-    if localp == nil then
+    if ZoomDistanceCheck == false then
         return;
     end
 
@@ -416,7 +415,7 @@ local function GetPlayerLocations()
     local localX = localpOrigin.x
     local localY = localpOrigin.y
 
-    for i, player in ipairs(players) do
+    for i, player in pairs(players) do
 
         --Skip players we don't want to enumerate
         if not player:IsAlive() then
@@ -424,7 +423,7 @@ local function GetPlayerLocations()
         end
 
         if player:IsDormant() then
-            goto Ignore    
+            goto Ignore
         end
 
         if player == localp then
@@ -438,6 +437,9 @@ local function GetPlayerLocations()
         local Vector3Players = player:GetAbsOrigin()
         local X = Vector3Players.x
         local Y = Vector3Players.y
+
+        localX = localpOrigin.x
+        localY = localpOrigin.y
 
         if IsInRange == false then
             if DistanceFrom(localX, localY, X, Y) < Distance then --If we get someone that is in range then we save who they are and their vector2
@@ -454,45 +456,36 @@ local function GetPlayerLocations()
 
     if IsInRange == true then
 
-        if CurrentClosestX == nil or CurrentClosestY == nil then
-            IsInRange = false;
-            goto Return;
-        end
-
         CurrentClosestX = closestplayer:GetAbsOrigin().x
         CurrentClosestY = closestplayer:GetAbsOrigin().y
 
-        if closestplayer:IsDormant() then
-            CurrentClosestX = nil
-            CurrentClosestY = nil
-            closestplayer = nil;
-
+        if localp == nil or not localp:IsAlive() then
             IsInRange = false;
-            goto Return;
+            return;
+        end
+
+        if closestplayer == nil then
+            error("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nthis might never get hit\n\n\n\n\n\n\n\n\n\n\n")
+            IsInRange = false;
+            return;
+        end
+
+        if closestplayer:IsDormant() then
+            IsInRange = false;
+            return;
         end
 
         if not closestplayer:IsAlive() then --Check if the current closest player has died
-
-            CurrentClosestX = nil
-            CurrentClosestY = nil
-            closestplayer = nil;
-
             IsInRange = false;
-            goto Return;
+            return;
         end
 
         if DistanceFrom(localX, localY, CurrentClosestX, CurrentClosestY) > Distance then --Check if they have left our range
-
-            CurrentClosestX = nil
-            CurrentClosestY = nil
-            closestplayer = nil;
-
             IsInRange = false;
-            goto Return;
+            return;
         end
     end
 end
-
 
 -- Auto unzoom. Needs improvement. Took it from some random person in the telegram months ago.
 local stopScope = false;
@@ -526,6 +519,7 @@ local function AutoUnZoom(cmd)
             stopScope = false;
         end
     end
+
 end
 
 --Toggle noisemaker spam, Dr_Coomer
