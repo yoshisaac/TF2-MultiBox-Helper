@@ -1,3 +1,5 @@
+<a href="https://discord.gg/at5YBjEW7r"><img alt="MultiBoxing discord server" src="https://img.shields.io/discord/1130830883398627388?label=Discord&logo=Discord"></a>  
+
 # TF2 Multi-box Helper
 Fork of Null__'s "Multiboxing helper" from the lmaobox forum. This lua is to assist in MultiBoxing in Team Fortress 2 using lmaobox.net and its lua scripting API.
  
