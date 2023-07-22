@@ -26,9 +26,11 @@
 
 !cspam - Change the chatspam type and period. Arguments: none/branded/custom or a number 1-60. The first argument can either be a number or a word, but the second argument has to be a number. Example: "!cspam branded 10" "!cspam custom" "!cspam 15" all are valid commands.
 
-!zoomdistance - Automatically zoom in when a player is close enough, regardless if they are through a wall or not. Arguments: on/off and a number. Example of valid commands: "!zoomdistance on 600" "!zoomdistance off"
+!zd - aka Zoom Distance will automatically zoom in when a player is close enough, regardless if they are through a wall or not. Arguments: on/off and a number. Example of valid commands: "!zd on 600" "!zd off"
 
-!autovotekick - Automatically vote out team mates. Arguments: 1/0 or on/off
+!autom - aka Auto-melee will automatically pulls out the melee and walks at near by players if they get too close with in a specific range. Arguments: on/of and a number. Example of valid commands: "!"
+
+!autovotekick - Automatically call votes on team mates. Arguments: 1/0 or on/off
 
 !lout - Change the current loadout. Arguments: a/b/c/d or 1/2/3/4
 

@@ -1,7 +1,22 @@
 -- Bot helper by __null
 -- Forked by Dr_Coomer -- I want people to note that some comments were made by me, and some were made by the original author. I try to keep what is mine and what was by the original as coherent as possible, even if my rambalings themselfs are not. Such as this long useless comment. The unfinished medi gun and inventory manager is by the original auther and such. I am just possonate about multi-boxing, and when I found this lua I saw things that could be changed around or added, so that multiboxing can be easier and less of a slog of going to each client or computer and manually changing classes, loud out, or turning on and off features.
+-- Library by Lnx00
 
--- Settings:
+--Importing the library
+if UnloadLib then UnloadLib() end -- I really didnt want to use LnxLib since I wanted this script to be a single be all script. Some day I will make it that, but the times I tried I couldn't export what I needed out of lnxLib.lua
+
+---@type boolean, lnxLib
+---@diagnostic disable-next-line: assign-type-mismatch
+local libLoaded, lnxLib = pcall(require, "lnxLib") --lnxLib is marked as a warning in my text editor because it "haS ThE POsiBiliTY tO Be NiL"
+assert(libLoaded, "lnxLib not found, please install it!")
+if lnxLib == nil then return end -- To make the text editor stop be mad :)
+assert(lnxLib.GetVersion() >= 0.987, "lnxLib version is too old, please update it!")
+
+local Math = lnxLib.Utils.Math
+local WPlayer = lnxLib.TF2.WPlayer
+local Helpers = lnxLib.TF2.Helpers
+
+-- On-load presets:
 -- Trigger symbol. All commands should start with this symbol.
 local triggerSymbol = "!";
 
@@ -15,12 +30,17 @@ local PlusVoiceRecord = false;
 local AutoVoteCheck = false;
 
 -- Global check for if we want ZoomDistance to be enabled
-local ZoomDistanceCheck = false;
+local ZoomDistanceCheck = true;
+
+-- Global check for if we want Auto-melee to be enabled
+local AutoMeleeCheck = false;
 
 -- Keep the table of command arguments outside of all functions, so we can just jack this when ever we need anymore than a single argument.
 local commandArgs;
 
 -- Constants
+local friend = -1
+local myFriends = steam.GetFriends() -- Recusively creating a table of the bot's steam friends causes lag and poor performans down to a single frame. Why? Answer: LMAObox
 local k_eTFPartyChatType_MemberChat = 1;
 local steamid64Ident = 76561197960265728;
 local partyChatEventName = "party_chat";
@@ -44,6 +64,16 @@ local foundMediguns = {
     quickfix = -1,
     kritz = -1
 };
+
+-- This method gives the distance between two points
+function DistanceFrom(x1, y1, x2, y2) 
+    return math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
+end
+
+-- This method gives the difference in only a axis between two points
+function DifferenceInHight(y1, y2)
+    return math.floor((y2 - y1))
+end
  
 -- Helper method that converts SteamID64 to SteamID3
 local function SteamID64ToSteamID3(steamId64)
@@ -165,7 +195,7 @@ local function SwitchWeapon(args)
     client.Command("slot" .. slot, true);
 end
 
--- Follow bot switcher added by Dr_Coomer - Doctor_Coomer#4425
+-- Follow bot switcher added by Dr_Coomer - doctor.coomer
 local function FollowBotSwitcher(args)
     local fbot = args[1];
 
@@ -194,7 +224,7 @@ local function FollowBotSwitcher(args)
     gui.SetValue("follow bot", fbot);
 end
 
--- Loudout changer added by Dr_Coomer - Doctor_Coomer#4425
+-- Loudout changer added by Dr_Coomer - doctor.coomer
 local function LoadoutChanger(args)
     local lout = args[1];
 
@@ -242,7 +272,7 @@ local function LoadoutChanger(args)
 end
 
 
--- Lobby Owner Only Toggle added by Dr_Coomer - Doctor_Coomer#4425
+-- Lobby Owner Only Toggle added by Dr_Coomer - doctor.coomer
 local function TogglelobbyOwnerOnly(args)
     local OwnerOnly = args[1]
 
@@ -266,7 +296,7 @@ local function TogglelobbyOwnerOnly(args)
     Respond("Lobby Owner Only is now: " .. OwnerOnly)
 end
 
--- Toggle ignore friends added by Dr_Coomer - Doctor_Coomer#4425
+-- Toggle ignore friends added by Dr_Coomer - doctor.coomer
 local function ToggleIgnoreFriends(args)
     local IgnoreFriends = args[1]
 
@@ -291,7 +321,7 @@ local function ToggleIgnoreFriends(args)
     gui.SetValue("Ignore Steam Friends", IgnoreFriends)
 end
 
--- connect to servers via IP re implemented by Dr_Coomer - Doctor_Coomer#4425
+-- connect to servers via IP re implemented by Dr_Coomer - doctor.coomer
 --Context: There was a registered callback for a command called "connect" but there was no function for it. So, via the name of the registered callback, I added it how I thought he would have.
 local function Connect(args)
     local Connect = args[1]
@@ -301,7 +331,7 @@ local function Connect(args)
     client.Command("connect " .. Connect, true);
 end
 
--- Chatspam switcher added by Dr_Coomer - Doctor_Coomer#4425
+-- Chatspam switcher added by Dr_Coomer - doctor.coomer
 local function cspam(args)
     local cspam = args[1];
 
@@ -353,22 +383,25 @@ end
 
 
 -- ZoomDistance from cathook, added by Dr_Coomer
--- Zoom Distance means that it will automatically zoomin when you are in a cirtant distance from a player
+-- Zoom Distance means that it will automatically zoomin when you are in a cirtant distance from a player regardless if there is a line of site of the enemy
 -- it will not change the visual zoom distance when scoping in
-local IsInRange = false;
+local ZoomDistanceIsInRange = false;
 local closestplayer
 
 local CurrentClosestX
 local CurrentClosestY
 
-local Distance = 500; --defaults distance
+local playerInfo
+local partyMemberTable
+
+local ZoomDistanceDistance = 950; --defaults distance
 
 local function zoomdistance(args)
     local zoomdistance = args[1]
     local zoomdistanceDistance = tonumber(table.remove(commandArgs, 2))
 
     if zoomdistance == nil then
-        Respond("Example: " .. triggerSymbol .. "zoomdistance on 650")
+        Respond("Example: " .. triggerSymbol .. "zd on 650")
         return
     end
 
@@ -376,26 +409,26 @@ local function zoomdistance(args)
 
     if zoomdistance == "1" then
         ZoomDistanceCheck = true
+        Respond("Zoom Distance is now: " .. tostring(ZoomDistanceCheck))
     elseif zoomdistance == "on" then
         ZoomDistanceCheck = true
+        Respond("Zoom Distance is now: " .. tostring(ZoomDistanceCheck))
     end
 
     if zoomdistance == "0" then
         ZoomDistanceCheck = false
+        Respond("Zoom Distance is now: " .. tostring(ZoomDistanceCheck))
     elseif zoomdistance == "off" then
         ZoomDistanceCheck = false
+        Respond("Zoom Distance is now: " .. tostring(ZoomDistanceCheck))
     end
 
     if zoomdistanceDistance == nil then
         return;
     end
 
-    Distance = zoomdistanceDistance
-
-end
-
-function DistanceFrom(x1, y1, x2, y2) --Maths :nerd:
-    return math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
+    ZoomDistanceDistance = zoomdistanceDistance
+    Respond("The minimum range is now: " .. tostring(ZoomDistanceDistance))
 end
 
 local function GetPlayerLocations()
@@ -417,6 +450,12 @@ local function GetPlayerLocations()
 
     for i, player in pairs(players) do
 
+        playerInfo = client.GetPlayerInfo(player:GetIndex())
+        partyMemberTable = party.GetMembers()
+        if partyMemberTable == nil then goto Skip end
+        if Contains(partyMemberTable, playerInfo.SteamID) then goto Ignore end
+        ::Skip::
+
         --Skip players we don't want to enumerate
         if not player:IsAlive() then
             goto Ignore
@@ -433,6 +472,14 @@ local function GetPlayerLocations()
             goto Ignore
         end
 
+        if Contains(myFriends, playerInfo.SteamID) then
+            goto Ignore
+        end
+
+        if playerlist.GetPriority(player) == friend then
+            goto Ignore
+        end
+
         --Get the current enumerated player's vector2 from their vector3
         local Vector3Players = player:GetAbsOrigin()
         local X = Vector3Players.x
@@ -442,7 +489,8 @@ local function GetPlayerLocations()
         localY = localpOrigin.y
 
         if IsInRange == false then
-            if DistanceFrom(localX, localY, X, Y) < Distance then --If we get someone that is in range then we save who they are and their vector2
+
+            if DistanceFrom(localX, localY, X, Y) < ZoomDistanceDistance then --If we get someone that is in range then we save who they are and their vector2
                 IsInRange = true;
 
                 closestplayer = player;
@@ -456,21 +504,18 @@ local function GetPlayerLocations()
 
     if IsInRange == true then
 
-        CurrentClosestX = closestplayer:GetAbsOrigin().x
-        CurrentClosestY = closestplayer:GetAbsOrigin().y
-
-        if localp == nil or not localp:IsAlive() then
+        if localp == nil or not localp:IsAlive() then -- check if you died or dont exist
             IsInRange = false;
             return;
         end
 
-        if closestplayer == nil then
-            error("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nthis might never get hit\n\n\n\n\n\n\n\n\n\n\n")
+        if closestplayer == nil then -- ? despite this becoming nil after the player leaving, this never gets hit.
+            error("\n\n\n\n\n\n\n\n\n\n\nthis will never get hit\n\n\n\n\n\n\n\n\n\n\n")
             IsInRange = false;
             return;
         end
 
-        if closestplayer:IsDormant() then
+        if closestplayer:IsDormant() then -- check if they have gone dormant
             IsInRange = false;
             return;
         end
@@ -480,10 +525,18 @@ local function GetPlayerLocations()
             return;
         end
 
-        if DistanceFrom(localX, localY, CurrentClosestX, CurrentClosestY) > Distance then --Check if they have left our range
+        if DistanceFrom(localX, localY, CurrentClosestX, CurrentClosestY) > ZoomDistanceDistance then --Check if they have left our range
             IsInRange = false;
             return;
         end
+
+        if playerlist.GetPriority(closestplayer) == friend then
+            IsInRange = false
+            return;
+        end
+
+        CurrentClosestX = closestplayer:GetAbsOrigin().x
+        CurrentClosestY = closestplayer:GetAbsOrigin().y
     end
 end
 
@@ -497,11 +550,11 @@ local function AutoUnZoom(cmd)
         return;
     end
 
-    if IsInRange == true then
+    if ZoomDistanceIsInRange == true then
         if not (localp:InCond( TFCond_Zoomed)) then 
             cmd.buttons = cmd.buttons | IN_ATTACK2 
         end
-    elseif IsInRange == false then
+    elseif ZoomDistanceIsInRange == false then
         if stopScope == false then
             if (localp:InCond( TFCond_Zoomed)) then 
                 cmd.buttons = cmd.buttons | IN_ATTACK2 
@@ -631,6 +684,181 @@ local function responsecheck_message(msg) --If the vote failed respond with the 
 end
 --End of the Autovote casting functions
 
+
+-- Auto Melee, I entirely based this of Lnx's aimbot lua, because all I knew that I needed was some way to lock onto players, and the lmaobox api doesnt have all the built it features to do this.
+-- Made it a script that automatically pulls out the third weapon slot (aka the melee weapon) when a players gets too close, and walks at them.
+-- still subject to plenty of improvements, since right now this is as good as its most likely going to get.
+local AutoMeleeIsInRange = false
+local AutoMeleeDistance = 400 --350
+local lateralRange = 80 -- 80
+
+local function AutoMelee(args)
+    local AutoM = string.lower(args[1])
+    local AutoMDistance = tonumber(table.remove(commandArgs, 2))
+
+    if AutoM == nil or not Contains(availableOnOffArguments, AutoM) then
+        Respond("Usage: " .. triggerSymbol .. "AutoM on/off an-number")
+        return
+    end
+
+    if AutoM == "on" then
+        AutoMeleeCheck = true
+        Respond("Auto-melee is now: " .. tostring(AutoMeleeCheck))
+    elseif AutoM == "off" then
+        AutoMeleeCheck = false
+        Respond("Auto-melee is now: " .. tostring(AutoMeleeCheck))
+    end
+
+    if AutoMDistance == nil then
+        return
+    end
+
+    AutoMeleeDistance = AutoMDistance
+    Respond("Minimum range is now: " .. tostring(AutoMeleeDistance))
+end
+
+-- Finds the best position for hitscan weapons
+local function CheckHitscanTarget(me, player)
+    -- FOV Check
+    local aimPos = player:GetHitboxPos(5) -- body
+    if not aimPos then return nil end
+    local angles = Math.PositionAngles(me:GetEyePos(), aimPos)
+
+    -- Visiblity Check
+    if not Helpers.VisPos(player:Unwrap(), me:GetEyePos(), player:GetHitboxPos(5)) then return nil end
+
+    -- The target is valid
+    return angles
+end
+
+-- Checks the given target for the given weapon
+local function CheckTarget(me, entity, weapon) -- this entire function needs more documentation for whats going on
+    partyMemberTable = party.GetMembers()
+    playerInfo = client.GetPlayerInfo(entity:GetIndex())
+    if partyMemberTable == nil then goto Skip end
+    if Contains(partyMemberTable, playerInfo.SteamID) then return nil end
+    ::Skip::
+
+    if not entity then return nil end
+    if not entity:IsAlive() then return nil end
+    if entity:IsDormant() then return nil end
+    if entity:GetTeamNumber() == me:GetTeamNumber() then return nil end
+    if entity:InCond(TFCond_Bonked) then return nil end
+
+    if Contains(myFriends, playerInfo.SteamID) then return nil end
+    if playerlist.GetPriority(entity) == friend then return nil end
+
+    if DistanceFrom(me:GetAbsOrigin().x, me:GetAbsOrigin().y, entity:GetAbsOrigin().x, entity:GetAbsOrigin().y) > AutoMeleeDistance then return nil end
+
+    local player = WPlayer.FromEntity(entity)
+
+    return CheckHitscanTarget(me, player)
+end
+
+-- Returns the best target for the given weapon
+local function GetBestTarget(me, weapon)
+    local players = entities.FindByClass("CTFPlayer")
+    local meVec
+    local playerVec
+    local currentPlayerVec
+    local bestTarget = nil
+    local currentEnt
+
+    -- Check all players
+    for _, entity in pairs(players) do
+        meVec = me:GetAbsOrigin()
+        playerVec = entity:GetAbsOrigin()
+
+        local target = CheckTarget(me, entity, weapon)
+        if DifferenceInHight(meVec.z, playerVec.z) >= lateralRange then goto continue end
+        if not target or target == nil then goto continue end
+
+        if DistanceFrom(meVec.x, meVec.y, playerVec.x, playerVec.y) < AutoMeleeDistance then --If we get someone that is in range then we save who they are and their vector2
+            bestTarget = target;
+            currentEnt = entity;
+            currentPlayerVec = currentEnt:GetAbsOrigin()
+            client.Command("slot3", true)
+            client.Command("+forward", true)
+            AutoMeleeIsInRange = true
+        end
+
+        ::continue::
+    end
+
+    if AutoMeleeIsInRange == true then
+
+        if me == nil or not me:IsAlive() then -- check if you died or dont exist
+            AutoMeleeIsInRange = false;
+            client.Command("-forward", true)
+            client.Command("slot1", true)
+            return nil;
+        end
+
+        if currentEnt == nil then
+            AutoMeleeIsInRange = false;
+            client.Command("-forward", true)
+            client.Command("slot1", true)
+            return nil;
+        end
+
+        if currentEnt:IsDormant() then -- check if they have gone dormant
+            AutoMeleeIsInRange = false;
+            client.Command("-forward", true)
+            client.Command("slot1", true)
+            return nil;
+        end
+
+        if not currentEnt:IsAlive() then --Check if the current closest player has died
+            AutoMeleeIsInRange = false;
+            client.Command("-forward", true)
+            client.Command("slot1", true)
+            return nil;
+        end
+
+        if DistanceFrom(meVec.x, meVec.y, currentPlayerVec.x, currentPlayerVec.y) > AutoMeleeDistance then --Check if they have left our range
+            AutoMeleeIsInRange = false;
+            client.Command("-forward", true)
+            client.Command("slot1", true)
+            return nil;
+        end
+
+        if playerlist.GetPriority(currentEnt) == -1 then -- if they become your friend all of a suden
+            AutoMeleeIsInRange = false;
+            client.Command("-forward", true)
+            client.Command("slot1", true)
+            return nil 
+        end
+
+        meVec = me:GetAbsOrigin()
+        currentPlayerVec = currentEnt:GetAbsOrigin()
+    end
+
+    return bestTarget
+end
+
+local function AutoMeleeAimbot()
+    if AutoMeleeCheck == false then return end
+
+    local me = WPlayer.GetLocal()
+    if not me or not me:IsAlive() then return end
+
+    local weapon = me:GetActiveWeapon()
+    if not weapon then return end
+
+    -- Get the best target
+    local currentTarget = GetBestTarget(me, weapon)
+    if not currentTarget then return end
+
+    -- Aim at the target
+    engine.SetViewAngles(currentTarget)
+end
+
+callbacks.Register("Unload", function()
+    client.Command("-forward", true) -- if for some reason unloaded while running at someone
+end)
+-- End of auto-melee
+
+
 local function SwitchClass(args)
     local class = args[1];
 
@@ -707,7 +935,7 @@ local function TauntByName(args)
     client.Command("taunt_by_name " .. fullTauntName, true);
 end
 
--- Reworked Mic Spam, added by Dr_Coomer - Doctor_Coomer#4425
+-- Reworked Mic Spam, added by Dr_Coomer - doctor.coomer
 local function Speak(args)
     Respond("Listen to me!")
     PlusVoiceRecord = true;
@@ -848,15 +1076,11 @@ end
 local function RegisterCommand(commandName, callback)
     if commands[commandName] ~= nil then
         error("Command with name " .. commandName .. " was already registered!");
-        return; -- just in case, idk if error() acts as an exception
+        return; -- just in case, idk if error() acts as an exception -- it does act as an exception original author.
     end
 
     commands[commandName] = callback;
 end
-
-callbacks.Register("Draw", "test", function ()
-    
-end)
 
 -- Sets up command list and registers an event hook
 local function Initialize()
@@ -892,7 +1116,7 @@ local function Initialize()
     -- Broken for now! Will fix later.
     --inventory.Enumerate(EnumerateInventory);
 
-    -- [[ Stuff added by Dr_Coomer - Doctor_Coomer#4425 ]] --
+    -- [[ Stuff added by Dr_Coomer - doctor.coomer ]] --
 
     -- Switch Follow Bot
     RegisterCommand("fbot", FollowBotSwitcher);
@@ -926,8 +1150,12 @@ local function Initialize()
     callbacks.Register("DispatchUserMessage", "responsecheck_message", responsecheck_message)
 
     --Zoom Distance
-    RegisterCommand("zoomdistance", zoomdistance)
+    RegisterCommand("zd", zoomdistance)
     callbacks.Register("CreateMove", "GetPlayerLocations", GetPlayerLocations)
+
+    --Auto melee
+    callbacks.Register("CreateMove", "AutoMelee", AutoMeleeAimbot)
+    RegisterCommand("autom", AutoMelee)
 
     --Auto unzoom
     callbacks.Register("CreateMove", "unzoom", AutoUnZoom)
