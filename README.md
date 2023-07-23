@@ -14,6 +14,7 @@ The commands you run have to be sent through partychat. You can find the command
 
 # Features
 * Autvote Casting
+* Auto-melee
 * Zoom Distance
 * Auto Unzoom
 * Toggle cheat features
