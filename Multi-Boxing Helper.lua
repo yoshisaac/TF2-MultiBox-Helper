@@ -14,7 +14,6 @@ assert(lnxLib.GetVersion() >= 0.987, "lnxLib version is too old, please update i
 
 local Math = lnxLib.Utils.Math
 local WPlayer = lnxLib.TF2.WPlayer
-local Helpers = lnxLib.TF2.Helpers
 
 -- On-load presets:
 -- Trigger symbol. All commands should start with this symbol.
@@ -161,12 +160,12 @@ local function FireGameEvent(event)
 end
 
 -- ============= Commands' section ============= --
-local function KillCommand(args)
+local function KillCommand()
     client.Command("kill", true);
     Respond("The HAEVY IS DEAD.");
 end
 
-local function ExplodeCommand(args)
+local function ExplodeCommand()
     client.Command("explode", true);
     Respond("Kaboom!");
 end
@@ -717,6 +716,12 @@ local function AutoMelee(args)
     Respond("Minimum range is now: " .. tostring(AutoMeleeDistance))
 end
 
+---Pasted directly out of Lnx's library, since something with MASK_SHOT broke on lmaobox's end (thanks you Mr Curda)
+function VisPos(target, from, to)
+    local trace = engine.TraceLine(from, to, (CONTENTS_SOLID|CONTENTS_MOVEABLE|CONTENTS_MONSTER|CONTENTS_WINDOW|CONTENTS_DEBRIS|0x40000000) | CONTENTS_GRATE)
+    return (trace.entity == target) or (trace.fraction > 0.99)
+end
+
 -- Finds the best position for hitscan weapons
 local function CheckHitscanTarget(me, player)
     -- FOV Check
@@ -725,7 +730,7 @@ local function CheckHitscanTarget(me, player)
     local angles = Math.PositionAngles(me:GetEyePos(), aimPos)
 
     -- Visiblity Check
-    if not Helpers.VisPos(player:Unwrap(), me:GetEyePos(), player:GetHitboxPos(5)) then return nil end
+    if not VisPos(player:Unwrap(), me:GetEyePos(), player:GetHitboxPos(5)) then return nil end
 
     -- The target is valid
     return angles
