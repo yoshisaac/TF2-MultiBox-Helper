@@ -718,7 +718,7 @@ end
 
 ---Pasted directly out of Lnx's library, since something with MASK_SHOT broke on lmaobox's end (thanks you Mr Curda)
 function VisPos(target, from, to)
-    local trace = engine.TraceLine(from, to, (CONTENTS_SOLID|CONTENTS_MOVEABLE|CONTENTS_MONSTER|CONTENTS_WINDOW|CONTENTS_DEBRIS|0x40000000) | CONTENTS_GRATE)
+    local trace = engine.TraceLine(from, to, (0x1|0x4000|0x2000000|0x2|0x4000000|0x40000000) | CONTENTS_GRATE)
     return (trace.entity == target) or (trace.fraction > 0.99)
 end
 
