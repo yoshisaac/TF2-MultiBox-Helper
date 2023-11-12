@@ -28,7 +28,7 @@
 
 !zd - aka Zoom Distance will automatically zoom in when a player is close enough, regardless if they are through a wall or not. Arguments: on/off and a number. Example of valid commands: "!zd on 600" "!zd off"
 
-!autom - aka Auto-melee will automatically pulls out the melee and walks at near by players if they get too close with in a specific range. Arguments: on/of and a number. Example of valid commands: "!"
+!autom - aka Auto-melee will automatically pulls out the melee and walks at near by players if they get too close with in a specific range. Arguments: on/off and a number. Example of a valid command: "!autom on 500"
 
 !autovotekick - Automatically call votes on team mates. Arguments: 1/0 or on/off
 
