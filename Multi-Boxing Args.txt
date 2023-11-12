@@ -34,7 +34,7 @@
 
 !lout - Change the current loadout. Arguments: a/b/c/d or 1/2/3/4
 
-!nmaker - Toggle noisemaker spam. ARguments: 1/0 or on/off
+!nmaker - Toggle noisemaker spam. Arguments: 1/0 or on/off
 
 !taunt - Bot will execute a taunt. No Arguments.
 
