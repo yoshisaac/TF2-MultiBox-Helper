@@ -10,7 +10,7 @@
 
 !OwnerOnly - Toggle if only the owner of the party should be able to command the bots. Note: When this is set to false, other people in your party can set it back to true. Arguments: 1/0 or true/false
 
-!IgnoreFriends - Toggle if the bots should ignore people it has friended on steam/people that are in the party. Arguments: 1/1 or true/false
+!IgnoreFriends - Toggle if the bots should ignore people it has friended on steam/people that are in the party. Arguments: 1/0 or true/false
 
 !kill - Suicide. No Arguments.
 
