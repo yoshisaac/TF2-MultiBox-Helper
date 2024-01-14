@@ -14,7 +14,7 @@ There, you can download the latest version of LnxLib, which will be more bug fre
 The commands you run have to be sent through partychat. You can find the command docs and arguments here: https://github.com/yoshisaac/TF2-MultiBox-Helper/wiki/Commands-Arguments-Usage
 
 # Features
-* Autvote Casting
+* Auto-vote Casting
 * Auto-melee
 * Zoom Distance
 * Auto Unzoom
